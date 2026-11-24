@@ -51,19 +51,12 @@ ModuleNexus<PluginHost> plugin;
 //
 PluginHost::PluginHost()
 {
-	if (CFBundleRef securityFramework = CFBundleGetBundleWithIdentifier(CFSTR("com.apple.security")))
-		if (CFRef<CFURLRef> plugins = CFBundleCopyBuiltInPlugInsURL(securityFramework))
-			if (CFRef<CFURLRef> pluginURL = makeCFURL("csparser.bundle", true, plugins)) {
-				plugin = new LoadableBundle(cfString(pluginURL).c_str());
-				plugin->load();
-				CODESIGN_LOAD_ANTLR();
-				antlr = reinterpret_cast<FindAntlrPlugin *>(plugin->lookupSymbol(FINDANTLRPLUGIN))();
-				return;
-			}
-				
-	// can't load plugin - fail
-    Syslog::warning("code signing problem: unable to load csparser plug-in");
-	MacOSError::throwMe(errSecCSInternalError);
+	// Darling links the ANTLR requirement parser (antlrplugin.cpp) into this
+	// library instead of shipping it as Security.framework/PlugIns/csparser.bundle,
+	// so use it directly; looking for the bundle made every
+	// SecRequirementCreateWithString call fail.
+	CODESIGN_LOAD_ANTLR();
+	antlr = findAntlrPlugin();
 }
 
 
