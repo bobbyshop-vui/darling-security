@@ -847,8 +847,12 @@ int main(int argc, char *argv[])
     // TODO: fix that by changing the user's home directory in our `/etc/passwd` (which is where launchd gets its value for HOME from)
 #ifndef DARLING
     trustd_sandbox();
-#endif
     FixTrustdFilePermissions();
+#else
+    // Darling doesn't ship trustdFileHelper (trustd already runs as the user
+    // who owns its files); the synchronous NSXPC call to the missing service
+    // never returned, so trustd hung before serving any trust evaluation.
+#endif
     /* set up SQLite before some other component has a chance to create a database connection */
     _SecDbServerSetup();
 
